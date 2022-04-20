@@ -6,7 +6,7 @@ from threading import Thread
 import os
 import random
 
-
+import numpy as np
 import cv2 as cv
 
 from utils.network_wrappers import Detector
@@ -16,7 +16,6 @@ from openvino.inference_engine import IECore  # pylint: disable=import-error,E06
 
 from tracker import Tracker
 import monitors
-
 
 print('Creating Inference Engine')
 ie = IECore()
@@ -49,7 +48,7 @@ class FramesThreadBody:
 def from_video_get_person(params, config, capture, detector):
     frame_number = 0
     key = -1
-
+    locate = []
     if config.normalizer_config.enabled:
         capture.add_transform(
             NormalizerCLAHE(
@@ -75,7 +74,7 @@ def from_video_get_person(params, config, capture, detector):
             break
         presenter.handleKey(key)
 
-        skip = 5
+        skip = params.skip  # 跳帧分析
 
         try:
             if thread_body.count % skip == 0:
@@ -97,12 +96,18 @@ def from_video_get_person(params, config, capture, detector):
             for i, detections in enumerate(all_detections[video]):
                 possible = detections[1]
                 x1, y1, x2, y2 = detections[0]
-                if possible > 0.75:
+                if possible > params.t_detector:
                     cut = frames[0][y1:y2, x1:x2]
                     out_path = params.output_pic
                     name = os.path.basename(params.input[video]).split('.')[0] + '_' + str(frame_number) + '_' + str(i)
                     cv.imwrite(out_path + name + '.jpg', cut)
-        print('Finished.')
+                    locate.append([detections[0], frame_number, i, 0])
+    if params.is_save:
+        locate_arr = np.array(locate)
+        np.save('location.npy', locate_arr)
+        print("Finished saving.")
+
+    print('Finished writing.')
 
 
 def run_demo():
@@ -121,8 +126,8 @@ def run_demo():
                         help='Path to the object detection model_xml')
     parser.add_argument('--config', type=str, default=os.path.join(current_dir, 'configs/person.py'), required=False,
                         help='Configuration file')
-    parser.add_argument('--output_pic',type=str, default='./ReID_demo/gallery/g/', help='Path to output picture')
-    parser.add_argument('--t_detector', type=float, default=0.6,
+    parser.add_argument('--output_pic', type=str, default='./ReID_demo/gallery/g/', help='Path to output picture')
+    parser.add_argument('--t_detector', type=float, default=0.9,
                         help='Threshold for the object detection model')
     parser.add_argument('--output_video', type=str, default='', required=False,
                         help='Optional. Path to output video')
@@ -133,12 +138,16 @@ def run_demo():
     parser.add_argument('-d', '--device', type=str, default='CPU')
     parser.add_argument('-u', '--utilization_monitors', default='', type=str,
                         help='Optional. List of monitors to show initially.')
-    parser.add_argument('--top_k', default=50, type=int,
+    parser.add_argument('--top_k', default=10, type=int,
                         help='Top k indexes in gallery feature.')
+    parser.add_argument('--is_save', default=False, type=bool,
+                        help='Save all detections')
+    parser.add_argument('--skip', default=5, type=int,
+                        help='Skip n frames when analyzing.')
     args = parser.parse_args()
 
     if len(args.config):
-        print('Reading configuration file {}'.format(args.config))
+        # print('Reading configuration file {}'.format(args.config))
         config = read_py_config(args.config)
     else:
         raise FileNotFoundError
@@ -155,14 +164,15 @@ def run_demo():
 
     from_video_get_person(args, config, capture, object_detector)
 
-    tracker = Tracker(ie, args, data_dir='ReID_demo',device='CPU')
+    tracker = Tracker(ie, args, data_dir='ReID_demo', device='CPU')
     fm = tracker.get_feature_map()
-    message = tracker.compute_distance(fm)
-    return message
+    raw_message = tracker.compute_distance(fm)
+
+    # print(raw_message)
+
+    return raw_message
 
 
 if __name__ == '__main__':
     message = run_demo()
-
-
-
+    print(message)

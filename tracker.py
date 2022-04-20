@@ -16,21 +16,24 @@ class Tracker:
         self.device = device
         self.data_dir = data_dir
 
-
     def load_network(self):
         net = self.ie.read_network(model=self.model_xml, weights=self.model_bin)
-        self.input_blob = next(iter(net.inputs))
+        self.input_blob = next(iter(net.input_info))
         self.out_blob = next(iter(net.outputs))
         exec_net = self.ie.load_network(network=net, num_requests=1, device_name=self.device)
         return net, exec_net
 
     def fliplr(self, img):
-        '''flip horizontal'''
+        """ flip horizontal """
         inv_idx = torch.arange(img.size(3) - 1, -1, -1).long()  # N x C x H x W
         img_flip = img.index_select(3, inv_idx)
         return img_flip
 
     def get_feature_map(self):
+        """
+        use openvino model to inference
+        :return: feature map
+        """
         h, w = 224, 224
 
         data_transforms = transforms.Compose([transforms.Resize((h, w), interpolation=3),
@@ -54,6 +57,7 @@ class Tracker:
 
         feature_map = {'gallery_f': gallery_feature.numpy(), 'gallery_cam': self.gallery_cam, 'pic_num': self.pic_num,
                        'query_f': query_feature.numpy(), 'query_label': self.query_label}
+
         return feature_map
 
     def extract_feature(self, dataloaders):
@@ -96,18 +100,18 @@ class Tracker:
 
     def get_cam_id_and_time(self, g_path):
         camera_id = []
-        pic_num = []
+        pic_info = []
         for path, v in g_path:
             filename = os.path.basename(path)
             camera = filename.split('_')[0]
-            num = int(filename.split('_')[1])
+            time_num = int(filename.split('_')[1])
+            person_num = int(filename.split('_')[2][0])
             if camera == '-1':
                 continue
             camera_id.append(int(camera[0]))
-            pic_num.append(num)
+            pic_info.append([time_num, person_num])
 
-        return camera_id, pic_num
-
+        return camera_id, pic_info
 
     def sort_img(self, qf, gf):
         query = qf.view(-1, 1)
@@ -122,17 +126,16 @@ class Tracker:
         return index
 
     def compute_distance(self, feature_map):
-        query_f = torch.FloatTensor(feature_map['query_f'][0])
+        print('Computing......')
+        raw_message = []
         gallery_f = torch.FloatTensor(feature_map['gallery_f'])
-        index = self.sort_img(query_f, gallery_f)
-        choose = index[:self.params.top_k]
-        # print(index)
-        # print(self.gallery_cam)
-        # print(self.pic_num)
-        message = []
-        for i in choose:
-            temp = []
-            temp.append(self.gallery_cam[i])
-            temp.append(self.pic_num[i])
-            message.append(temp)
-        return message
+        for query_num in range(len(self.query_label)):
+            query_f = torch.FloatTensor(feature_map['query_f'][query_num])
+            index = self.sort_img(query_f, gallery_f)
+            choose = index[:self.params.top_k]
+            for i in choose:
+                temp = [self.query_label[query_num], self.gallery_cam[i], self.pic_num[i]]
+                # pic_num:[frame_num,person_num]
+                raw_message.append(temp)
+        print('Finished computing.')
+        return raw_message
