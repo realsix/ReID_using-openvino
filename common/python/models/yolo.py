@@ -31,6 +31,7 @@ ANCHORS = {
                     81.0, 82.0, 135.0, 169.0, 344.0, 319.0]
 }
 
+
 class YOLO(Model):
     class Params:
         # Magic numbers are copied from yolo samples
