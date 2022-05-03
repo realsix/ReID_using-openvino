@@ -2,7 +2,7 @@
 
 # Easier, faster, and more accurate to deploy in trajectory tracking with Re-identification using openvino
 
-<img src="Q:\HuaGuang\HuaGuangFiles\control_pro\version2\common\show_pic\image-20220503021926308.png" alt="image-20220503021926308" style="zoom:200%;" />
+<img src=".\common\show_pic\image.png" alt="image" style="zoom:200%;" />
 
 # How To Use:  **Quick start**
 
@@ -36,7 +36,7 @@ e.g. You have a supermarket surveillance video 0.mp4, if the time when the video
 
 ### 1.3、Put your target image into ./target_input
 
-We provide our models and samples. you can also download our sample image and video which had been zipped. Baidu Drive:TBD (password:TBD)
+We provide our models and samples. you can also download our sample image and video which had been zipped. Baidu Drive:[here](https://pan.baidu.com/s/1cpF6utRK_PDCnJoSFNvJ9A) (password:oj8k)
 
 You can just copy all files into main project path without any other process after downloading.
 
