@@ -20,7 +20,7 @@ pip install -r requirements.txt
 
 ### 1.1、Add your video information in configs/configs.json
 
-e.g. You have a supermarket surveillance video 0.mp4, if the time when the video starts shooting is 8:00, add "supermarket" in place, where "0" is the name of the video and 28800 is the number of seconds when the video starts shooting, that is, 8x60x60 = 28800.
+e.g. Supposed you have a supermarket surveillance video 0.mp4, if the time when the video starts shooting is 8:00, add "supermarket" in place, where "0" is the name of the video and 28800 is the number of seconds when the video starts shooting, that is, 8x60x60 = 28800.
 
 ~~~json
 {
