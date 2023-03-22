@@ -36,7 +36,7 @@ e.g. Supposed you have a supermarket surveillance video 0.mp4, if the time when 
 
 ### 1.3、Put your target image into ./target_input
 
-We provide our models and samples. you can also download our sample image and video which had been zipped. Baidu Drive:[here](https://pan.baidu.com/s/1cpF6utRK_PDCnJoSFNvJ9A) (password:oj8k)
+We provide our models and samples. you can also download our sample image and video which had been zipped. Baidu Drive:[here](链接：https://pan.baidu.com/s/1nkM6b2jDnjJHJTUZV-qGDw?pwd=oj8k ) (password:oj8k)
 
 You can just copy all files into main project path without any other process after downloading.
 
